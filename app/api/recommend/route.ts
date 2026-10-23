@@ -7,39 +7,37 @@ const openai = new OpenAI({
 
 export async function POST(request: Request) {
   try {
-    const { vibe, candidateFragrances } = await request.json();
+    const body = await request.json();
+    const { vibe, candidateFragrances } = body;
+
+    if (!vibe || !Array.isArray(candidateFragrances)) {
+      return NextResponse.json(
+        { error: "Invalid payload parameters." },
+        { status: 400 }
+      );
+    }
+
+    if (candidateFragrances.length === 0) {
+      return NextResponse.json({ matches: [] });
+    }
+
+    const cappedCandidates = candidateFragrances.slice(0, 10);
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.1,
-      max_tokens: 250, 
+      max_tokens: 250,
       messages: [
         {
           role: "system",
           content: `You are a master perfumer selecting the top 5 fragrance matches from a candidates list.
 
-RULES:
-1. Select the 5 best matches based on scent profile ('accords') and requested vibe.
-2. Keep "matchReason" ultra-concise (1 sentence, max 15 words).
-3. Return a JSON object with a "matches" array.
-
-JSON Output Schema:
-{
-  "matches": [
-    {
-      "id": "candidate_id",
-      "brand": "Brand Name",
-      "name": "Perfume Name",
-      "accords": ["accord1", "accord2"],
-      "matchPercentage": 95,
-      "matchReason": "Ultra-short 1-sentence reason why it matches."
-    }
-  ]
-}`
+Select the 5 best matches based on scent profile ('accords') and requested vibe.
+Return a JSON object with a "matches" array containing objects with: id, brand, name, accords, matchPercentage.`
         },
         {
           role: "user",
-          content: `Vibe: "${vibe}"\nCandidates: ${JSON.stringify(candidateFragrances)}`
+          content: `Vibe: "${vibe.slice(0, 200)}"\nCandidates: ${JSON.stringify(cappedCandidates)}`
         }
       ],
       response_format: { type: "json_object" }
@@ -50,6 +48,9 @@ JSON Output Schema:
 
   } catch (error) {
     console.error("Reranker Error:", error);
-    return NextResponse.json({ error: "Failed to rerank candidates." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to rank candidate fragrances." },
+      { status: 500 }
+    );
   }
 }
