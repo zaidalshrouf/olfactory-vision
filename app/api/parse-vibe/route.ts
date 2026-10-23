@@ -14,18 +14,17 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are a master perfumer and fragrance data translator. 
-          The user will give you a mood, scene, or memory. 
-          Translate it into a structured JSON object containing:
-          1. "ai_reasoning": A 2-sentence explanation of what scent profile fits this vibe.
-          2. "main_accords": An array of the 3-4 main fragrance accords (e.g., ["Woody", "Amber"]).
-          3. "image_keyword": A highly descriptive search term (1-3 words) that visually represents this mood. We will use this to find an atmospheric background image.
-          Output ONLY valid JSON.`
+          content: `You are a master perfumer and fragrance database query parser.
+          
+          Analyze the user's request and return a JSON object with:
+          1. "ai_reasoning": A 2-sentence explanation of what scent profile fits this request.
+          2. "main_accords": Array of 3-5 descriptive accords for display (e.g., ["Juicy Mango", "Tropical", "Fruity"]).
+          3. "search_terms": Array of database search terms. CRITICAL: Always include macro-accord families for specific notes (e.g., if user asks for "mango", include ["mango", "tropical", "fruity", "sweet"]).
+          4. "primary_note": The single core key note or word requested (e.g., "mango", "coffee", "vanilla", "rose"). If none, return null.
+          5. "brand": If a brand or acronym is mentioned (e.g., "LV"), return the full official brand name ("Louis Vuitton"). Otherwise, null.
+          6. "image_keyword": 1-3 word query for mood photography.`
         },
-        { 
-          role: "user", 
-          content: vibe 
-        }
+        { role: "user", content: vibe }
       ],
       response_format: { type: "json_object" }
     });
@@ -35,6 +34,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("OpenAI Error:", error);
-    return NextResponse.json({ error: "Failed to parse the vibe." }, { status: 500 });
+    return NextResponse.json({ error: "Failed to parse vibe." }, { status: 500 });
   }
 }
