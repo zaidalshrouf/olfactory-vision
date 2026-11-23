@@ -25,3 +25,59 @@ A full-stack fragrance discovery web application that translates natural languag
 ---
 
 ## Architecture Pipeline
+
+```text
+[ User Prompt ]
+       │
+       ▼
+┌──────────────────────┐
+│  /api/parse-vibe     │ ──> OpenAI GPT-4o-mini
+└──────────────────────┘      (Extracts brand, primary note, expanded accords)
+       │
+       ▼
+┌──────────────────────┐
+│ Supabase PostgreSQL  │ ──> Multi-Query Retrieval (Brand + Name + Accords)
+└──────────────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ JS Relevance Scorer  │ ──> Weights & Sorts Candidate Pool
+└──────────────────────┘
+       │
+  ┌────┴──────────────────────────┐
+  │ Direct Match (Score >= 10)?   │
+ YES                             NO
+  │                               │
+  ▼                               ▼
+[ Instant Return (<300ms) ]  ┌──────────────────────┐
+                             │  /api/recommend      │ ──> OpenAI Reranker
+                             └──────────────────────┘
+                                    │
+                                    ▼
+                          [ Top 5 Ranked Matches ]
+```
+
+---
+
+## Local Setup
+
+1. **Clone the repository and install dependencies:**
+   ```bash
+   git clone [https://github.com/your-username/olfactory-vision.git](https://github.com/your-username/olfactory-vision.git)
+   cd olfactory-vision
+   npm install
+   ```
+
+2. **Configure environment variables:**
+   Create a `.env.local` file in the root directory:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:3000` in your browser.
